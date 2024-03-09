@@ -1,10 +1,15 @@
 package websocket
 
 import (
+	"context"
+
+	platform "github.com/codersidprogrammer/gonotif/platform/cache"
 	fiber_websocket "github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 )
+
+var ctx = context.Background()
 
 func NewAppWebsocket(app *fiber.App) AppWebsocket {
 	return &Websocket{
@@ -19,6 +24,7 @@ func NewAppWebsocket(app *fiber.App) AppWebsocket {
 // GetWebsocketHandler implements AppWebsocket.
 func (a *Websocket) GetWebsocketHandler(c *fiber_websocket.Conn) {
 
+	// platform.RedisConnection.SAdd(ctx, )
 	defer func() {
 		a.unregister <- c
 		c.Close()
@@ -39,6 +45,7 @@ func (a *Websocket) GetWebsocketHandler(c *fiber_websocket.Conn) {
 		log.Infof("recv: %s", msg)
 
 		if mt == fiber_websocket.TextMessage {
+			platform.RedisConnection.Publish(ctx, "publish-test", msg)
 			a.broadcast <- msg
 		} else {
 			log.Infof("websocket message type: %v", mt)
@@ -52,6 +59,8 @@ func (a *Websocket) GetWebsocketHandler(c *fiber_websocket.Conn) {
 }
 
 func (a *Websocket) WsRegister() {
+	go redisHandler()
+
 	for {
 		select {
 		case connection := <-a.register:
@@ -75,6 +84,21 @@ func (a *Websocket) WsRegister() {
 
 		case connection := <-a.unregister:
 			delete(a.clients, connection)
+		}
+	}
+}
+
+func redisHandler() {
+	ps := platform.RedisConnection.Subscribe(ctx, "publish-test")
+
+	for {
+		select {
+		case msg, ok := <-ps.Channel():
+			if !ok {
+				break
+			}
+			log.Infof("Subs receive: %s", msg.Payload)
+
 		}
 	}
 }
