@@ -1,20 +1,32 @@
 package notification
 
-type NotificationType int
-
-const (
-	Push NotificationType = iota
-	Email
+import (
+	"github.com/codersidprogrammer/gonotif/app/notification/controller"
+	"github.com/codersidprogrammer/gonotif/app/notification/service"
+	"github.com/gofiber/fiber/v2"
 )
 
-type Notification struct {
-	Message interface{}      `json:"message"`
-	Type    NotificationType `json:"type"`
+type appNotification struct {
+	app        *fiber.App
+	controller controller.NotificationController
 }
 
 type AppNotification interface {
-	RegisterTopic(topic string)
-	UnregisterTopic(topic string)
-	Publish(topic string, message interface{})
-	Subscribe(topic string, handler func(message interface{}))
+	Route()
+}
+
+func NewAppNotification(app *fiber.App) AppNotification {
+	return &appNotification{
+		app:        app,
+		controller: controller.NewNotificationController(service.NewNotificationService()),
+	}
+}
+
+// Route implements AppNotification.
+func (a *appNotification) Route() {
+	r := a.app.Group("/v1/notification")
+
+	r.Post("/bucket", a.controller.CreateNotification)
+	r.Get("/bucket", a.controller.GetNotifications)
+	r.Get("/bucket/:id", a.controller.GetNotification)
 }
