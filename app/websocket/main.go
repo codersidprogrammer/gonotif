@@ -6,7 +6,9 @@ import (
 )
 
 type client struct {
-	channel string
+	channel  string
+	topic    string
+	bucketId string
 }
 
 type Websocket struct {

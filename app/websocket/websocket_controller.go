@@ -32,6 +32,9 @@ func (a *Websocket) GetWebsocketHandler(c *fiber_websocket.Conn) {
 
 	a.register <- c
 
+	ps := platform.RedisConnection.Subscribe(ctx, "/xops/notification")
+	defer ps.Close()
+
 	var (
 		mt  int
 		msg []byte
@@ -45,7 +48,7 @@ func (a *Websocket) GetWebsocketHandler(c *fiber_websocket.Conn) {
 		log.Infof("recv: %s", msg)
 
 		if mt == fiber_websocket.TextMessage {
-			platform.RedisConnection.Publish(ctx, "publish-test", msg)
+			// platform.RedisConnection.Publish(ctx, "publish-test", msg)
 			a.broadcast <- msg
 		} else {
 			log.Infof("websocket message type: %v", mt)
@@ -59,7 +62,7 @@ func (a *Websocket) GetWebsocketHandler(c *fiber_websocket.Conn) {
 }
 
 func (a *Websocket) WsRegister() {
-	go redisHandler()
+	go redisHandler(a)
 
 	for {
 		select {
@@ -67,6 +70,7 @@ func (a *Websocket) WsRegister() {
 			a.clients[connection] = client{
 				channel: connection.Query("channel"),
 			}
+			log.Info(a.clients)
 
 		case message := <-a.broadcast:
 			for connection := range a.clients {
@@ -88,8 +92,8 @@ func (a *Websocket) WsRegister() {
 	}
 }
 
-func redisHandler() {
-	ps := platform.RedisConnection.Subscribe(ctx, "publish-test")
+func redisHandler(a *Websocket) {
+	ps := platform.RedisConnection.Subscribe(ctx, "/xops/notification")
 
 	for {
 		select {
@@ -98,7 +102,7 @@ func redisHandler() {
 				break
 			}
 			log.Infof("Subs receive: %s", msg.Payload)
-
+			a.broadcast <- []byte(msg.Payload)
 		}
 	}
 }
