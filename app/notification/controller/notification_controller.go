@@ -5,19 +5,23 @@ import (
 
 	repository "github.com/codersidprogrammer/gonotif/app/notification/repositories"
 	"github.com/codersidprogrammer/gonotif/app/notification/service"
+	"github.com/codersidprogrammer/gonotif/pkg/queue"
 	"github.com/codersidprogrammer/gonotif/pkg/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gojek/work"
 )
 
 type controller struct {
 	service     service.NotificationBucketService
 	pushService service.NotificationPushService
+	queue       *queue.Queue
 }
 
 type NotificationController interface {
 	GetNotification(c *fiber.Ctx) error
 	GetNotifications(c *fiber.Ctx) error
 	CreateNotification(c *fiber.Ctx) error
+	CreateNotificationWorker(c *fiber.Ctx) error
 
 	Publish(c *fiber.Ctx) error
 	Subscribe(c *fiber.Ctx) error
@@ -27,6 +31,7 @@ func NewNotificationController(service service.NotificationBucketService, push s
 	return &controller{
 		service:     service,
 		pushService: push,
+		queue:       queue.NewQueue("development_test"),
 	}
 }
 
@@ -38,6 +43,24 @@ func (co *controller) CreateNotification(c *fiber.Ctx) error {
 
 	result, err := co.service.Create(nb)
 	utils.ReturnErrMessageIfErr(err, "unmarshal notification", c)
+
+	return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+		"data": result,
+		"meta": &fiber.Map{},
+		"time": time.Now(),
+	})
+}
+
+func (co *controller) CreateNotificationWorker(c *fiber.Ctx) error {
+	result, err := co.queue.Register("send_notifcation", work.Q{
+		"topic": "/xops/notification",
+		"message": work.Q{
+			"from":    "system",
+			"to":      "582276",
+			"message": "Thanks for your submission",
+		},
+	})
+	utils.ReturnHttpErr400MessageIfErr(err, "queue failed", c)
 
 	return c.Status(fiber.StatusOK).JSON(&fiber.Map{
 		"data": result,
