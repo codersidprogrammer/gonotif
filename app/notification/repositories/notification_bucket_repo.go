@@ -89,7 +89,6 @@ func (b *bucketRepo) Get(id string) (NotificationBucket, error) {
 		return NotificationBucket{}, err
 	}
 
-	log.Info(nb)
 	return nb, nil
 }
 

@@ -3,6 +3,7 @@ package websocket
 import (
 	"context"
 
+	"github.com/codersidprogrammer/gonotif/pkg/model"
 	platform "github.com/codersidprogrammer/gonotif/platform/cache"
 	fiber_websocket "github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
@@ -11,7 +12,7 @@ import (
 
 var ctx = context.Background()
 
-func NewAppWebsocket(app *fiber.App) AppWebsocket {
+func NewAppWebsocket(app *fiber.App) model.App {
 	return &Websocket{
 		app:        app,
 		clients:    make(map[*fiber_websocket.Conn]client),

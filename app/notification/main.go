@@ -3,6 +3,7 @@ package notification
 import (
 	"github.com/codersidprogrammer/gonotif/app/notification/controller"
 	"github.com/codersidprogrammer/gonotif/app/notification/service"
+	"github.com/codersidprogrammer/gonotif/pkg/model"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -12,11 +13,7 @@ type appNotification struct {
 	controller  controller.NotificationController
 }
 
-type AppNotification interface {
-	Route()
-}
-
-func NewAppNotification(app *fiber.App) AppNotification {
+func NewAppNotification(app *fiber.App) model.App {
 	nps := service.NewNotificationPushService()
 	return &appNotification{
 		app:         app,
