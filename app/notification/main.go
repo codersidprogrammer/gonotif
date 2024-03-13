@@ -7,6 +7,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+const (
+	NOTIFICATION_JOB = "send_notificaction"
+)
+
 type appNotification struct {
 	app         *fiber.App
 	pushService service.NotificationPushService

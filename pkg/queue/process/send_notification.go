@@ -30,7 +30,7 @@ func (s *SendNotifcation) execute(job *work.Job) error {
 		return err
 	}
 
-	log.Info("Sending message: %s to topic: %v", message, topic)
+	log.Infof("Sending message: %s to topic: %v", message, topic)
 
 	return nil
 }

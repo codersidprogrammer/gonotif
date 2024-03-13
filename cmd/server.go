@@ -32,6 +32,8 @@ func Bootstrap() {
 }
 
 func Route(app *fiber.App) {
+
+	// Registering each apps here
 	pr := routes.NewRoute("public")
 	pr.Register(notification.NewAppNotification(app))
 	pr.Register(websocket.NewAppWebsocket(app))
