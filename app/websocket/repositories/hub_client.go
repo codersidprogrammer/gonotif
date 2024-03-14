@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/codersidprogrammer/gonotif/pkg/utils"
+	// "github.com/codersidprogrammer/gonotif/pkg/utils"
 	platform "github.com/codersidprogrammer/gonotif/platform/cache"
 	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/contrib/websocket"
@@ -37,18 +37,18 @@ type WsClient struct {
 	isListening chan bool
 	message     chan Message
 	client      *User
+	clients     map[*websocket.Conn]User
+	register    chan *websocket.Conn
 }
 
-func NewWsClient(topic string, name string) *WsClient {
+func NewWsClient() *WsClient {
 	return &WsClient{
-		channel:     platform.RedisConnection.Subscribe(ctx, topic),
-		name:        name,
+		channel:     platform.RedisConnection.Subscribe(ctx, "/#"),
 		isListening: make(chan bool),
 		message:     make(chan Message),
-		client: &User{
-			Name:  name,
-			Topic: topic,
-		},
+		register:    make(chan *websocket.Conn),
+		clients:     make(map[*websocket.Conn]User),
+		client:      &User{},
 	}
 }
 
@@ -65,55 +65,72 @@ func NewWsClientSpecified(topic string, name string) *WsClient {
 	}
 }
 
-func (c *WsClient) Send(message interface{}) {
+func (c *WsClient) Break() error {
+	log.Info("Break called")
+	c.isListening <- false
+	if err := c.channel.Unsubscribe(ctx, c.client.Topic); err != nil {
+		log.Fatal("Unsubscribe error: ", err)
+	}
 
+	// This lead to locking on the object while closing
+	// if err := c.channel.Close(); err != nil {
+	// 	log.Fatal("Fatal closing channel: ", err)
+	// }
+
+	if err := c.wsconn.Close(); err != nil {
+		log.Fatal("Fatal closing wsconn: ", err)
+	}
+
+	return nil
+}
+
+func (c *WsClient) Send(message interface{}) error {
+	return platform.RedisConnection.Publish(ctx, c.client.Topic, message).Err()
 }
 
 func (c *WsClient) WebsocketHandler(conn *websocket.Conn) {
 
-	s := conn.Query("user", "sytem")
-	s2 := conn.Query("topic", "/#")
+	user := conn.Query("user", "sytem")
+	topic := conn.Query("topic", "/#")
 
-	if s != "system" && s2 != "/#" {
-		c.channel = platform.RedisConnection.Subscribe(ctx, s2)
-		c.client = &User{
-			Name:  s,
-			Topic: s2,
-		}
+	c.name = user
+	c.channel = platform.RedisConnection.Subscribe(ctx, topic)
+	c.client = &User{
+		Name:  user,
+		Topic: topic,
 	}
 
-	b, err3 := json.Marshal(c.client)
-	if err3 != nil {
-		log.Fatal("failed to marshal", err3)
-	}
+	// b, err3 := json.Marshal(c.client)
+	// if err3 != nil {
+	// 	log.Fatal("failed to marshal", err3)
+	// }
 
-	_, err2 := platform.RedisConnection.SAdd(ctx, CONN_KEY, b).Result()
-	if err2 != nil {
-		log.Warnf("failed to add %s to redis", CONN_KEY, err2)
-		c.isListening <- false
-		c.channel.Close()
-		utils.ReturnErrorIfErr("", err2)
-	}
+	// _, err2 := platform.RedisConnection.SAdd(ctx, CONN_KEY, b).Result()
+	// if err2 != nil {
+	// 	log.Warnf("failed to add %s to redis", CONN_KEY, err2)
+	// 	c.isListening <- false
+	// 	c.channel.Close()
+	// 	utils.ReturnErrorIfErr("", err2)
+	// }
 
-	defer func() {
-		c.isListening <- false
-		c.channel.Close()
-		conn.Close()
-	}()
+	defer c.Break()
 
-	// state as true
+	// // state as true
 	c.isListening <- true
 	c.wsconn = conn
+	c.register <- conn
 
 	var (
 		mt  int
 		msg []byte
 		err error
 	)
+
+loop:
 	for {
 		if mt, msg, err = conn.ReadMessage(); err != nil {
 			log.Warn("read:", err)
-			break
+			break loop
 		}
 		log.Infof("recv: %s", msg)
 
@@ -135,6 +152,10 @@ func (c *WsClient) Listen() {
 
 		// TODO: find multiple topics listeners
 
+		case cn := <-c.register:
+			c.clients[cn] = *c.client
+			log.Warnf("Clients: %v ", len(c.clients))
+
 		// Listening for message
 		case msg := <-c.message:
 			log.Info("Incoming message from channel", msg.ChannelName)
@@ -146,11 +167,14 @@ func (c *WsClient) Listen() {
 				return
 			}
 			log.Infof("Subs receive, channer: %s, message: %s \n", msg.Channel, msg.Payload)
-			if msg.Channel == c.client.Topic {
-				if err := c.wsconn.WriteMessage(websocket.TextMessage, []byte(msg.Payload)); err != nil {
-					log.Warn("failed to write to websocket", err)
-					c.isListening <- false
-					c.wsconn.Close()
+
+			for conn, usr := range c.clients {
+				if msg.Channel == usr.Topic {
+					if err := conn.WriteMessage(websocket.TextMessage, []byte(msg.Payload)); err != nil {
+						log.Warn("failed to write to websocket", err)
+						c.isListening <- false
+						conn.Close()
+					}
 				}
 			}
 
@@ -166,7 +190,7 @@ func (c *WsClient) Listen() {
 					log.Warn("failed to remove listener, ", err)
 				}
 				log.Warn("Stopping listening")
-				return
+				// return
 			}
 		}
 	}

@@ -26,39 +26,35 @@ func NewAppWebsocket(app *fiber.App) model.App {
 func (a *Websocket) GetWebsocketHandler(c *fiber_websocket.Conn) {
 
 	// platform.RedisConnection.SAdd(ctx, )
-	defer func() {
-		a.unregister <- c
-		c.Close()
-	}()
+	// defer func() {
+	// 	a.unregister <- c
+	// 	c.Close()
+	// }()
 
-	a.register <- c
+	// a.register <- c
 
-	ps := platform.RedisConnection.Subscribe(ctx, "/xops/notification")
-	defer ps.Close()
+	// ps := platform.RedisConnection.Subscribe(ctx, "/xops/notification")
+	// defer ps.Close()
 
 	var (
 		mt  int
 		msg []byte
 		err error
 	)
+
+loop:
 	for {
 		if mt, msg, err = c.ReadMessage(); err != nil {
 			log.Warn("read:", err)
-			break
+			break loop
 		}
-		log.Infof("recv: %s", msg)
 
 		if mt == fiber_websocket.TextMessage {
-			// platform.RedisConnection.Publish(ctx, "publish-test", msg)
-			a.broadcast <- msg
+			c.WriteMessage(mt, msg)
+			log.Infof("websocket message: %v", msg)
 		} else {
 			log.Infof("websocket message type: %v", mt)
 		}
-
-		// if err = c.WriteJSON(msg); err != nil {
-		// 	log.Info("write:", err)
-		// 	break
-		// }
 	}
 }
 
