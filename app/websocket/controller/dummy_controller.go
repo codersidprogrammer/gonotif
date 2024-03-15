@@ -1,11 +1,20 @@
 package controller
 
 import (
+	"context"
+
 	repository "github.com/codersidprogrammer/gonotif/app/websocket/repositories"
 	platform "github.com/codersidprogrammer/gonotif/platform/cache"
+	"github.com/codersidprogrammer/gonotif/platform/transport"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2/log"
 )
+
+type chatMessage struct {
+	From string      `json:"from"`
+	To   string      `json:"to"`
+	Data interface{} `json:"data"`
+}
 
 type DummyController struct {
 	register   chan *websocket.Conn
@@ -45,7 +54,7 @@ func (d *DummyController) MessageListener() {
 	for {
 		select {
 		case msg := <-d.tenant.MessageChannel:
-			log.Infof("Receving msg from redis on channel: %s", msg.Channel)
+			log.Infof("Receving msg from mqtt on channel: %s", msg.Channel)
 			// for cn, _ := range clients {
 			// 	if cn.Query("channel") == msg.Channel {
 			// 		log.Info("Message is: ", msg.Payload)
@@ -65,11 +74,11 @@ func (d *DummyController) WebsocketHandler(c *websocket.Conn) {
 	d.tenant = t
 
 	t.Subscribe(channel)
-	d.register <- c // This section caused lock bugs
+	// d.register <- c // This section caused lock bugs
 
 	defer func() {
 		t.Unsubscribe(channel)
-		d.unregister <- c // This section caused lock bugs
+		// d.unregister <- c // This section caused lock bugs
 	}()
 
 	var (
@@ -87,7 +96,16 @@ loop:
 		log.Infof("recv: %s", msg)
 
 		if mt == websocket.TextMessage {
-			t.Send(channel, string(msg))
+			// t.Send(channel, string(msg))
+
+			_msg := &chatMessage{
+				From: name,
+				To:   "test-username-2",
+				Data: map[string]string{
+					"message": string(msg),
+				},
+			}
+			transport.MqttClient.Publish(context.Background(), channel, _msg)
 			log.Infof("websocket message: %v", msg)
 		} else {
 			log.Infof("websocket message type: %v", mt)
