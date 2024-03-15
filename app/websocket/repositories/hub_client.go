@@ -39,6 +39,7 @@ type WsClient struct {
 	client      *User
 	clients     map[*websocket.Conn]User
 	register    chan *websocket.Conn
+	unregister  chan *websocket.Conn
 }
 
 func NewWsClient() *WsClient {
@@ -47,6 +48,7 @@ func NewWsClient() *WsClient {
 		isListening: make(chan bool),
 		message:     make(chan Message),
 		register:    make(chan *websocket.Conn),
+		unregister:  make(chan *websocket.Conn),
 		clients:     make(map[*websocket.Conn]User),
 		client:      &User{},
 	}
@@ -67,7 +69,10 @@ func NewWsClientSpecified(topic string, name string) *WsClient {
 
 func (c *WsClient) Break() error {
 	log.Info("Break called")
+
 	c.isListening <- false
+	c.unregister <- c.wsconn
+
 	if err := c.channel.Unsubscribe(ctx, c.client.Topic); err != nil {
 		log.Fatal("Unsubscribe error: ", err)
 	}
@@ -99,19 +104,6 @@ func (c *WsClient) WebsocketHandler(conn *websocket.Conn) {
 		Name:  user,
 		Topic: topic,
 	}
-
-	// b, err3 := json.Marshal(c.client)
-	// if err3 != nil {
-	// 	log.Fatal("failed to marshal", err3)
-	// }
-
-	// _, err2 := platform.RedisConnection.SAdd(ctx, CONN_KEY, b).Result()
-	// if err2 != nil {
-	// 	log.Warnf("failed to add %s to redis", CONN_KEY, err2)
-	// 	c.isListening <- false
-	// 	c.channel.Close()
-	// 	utils.ReturnErrorIfErr("", err2)
-	// }
 
 	defer c.Break()
 
@@ -192,6 +184,10 @@ func (c *WsClient) Listen() {
 				log.Warn("Stopping listening")
 				// return
 			}
+
+		case ur := <-c.unregister:
+			delete(c.clients, ur)
+			log.Info("Unregistered, Total Clients registered: ", len(c.clients))
 		}
 	}
 }
