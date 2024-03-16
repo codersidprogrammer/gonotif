@@ -11,12 +11,15 @@ import (
 	"github.com/codersidprogrammer/gonotif/pkg/config"
 	"github.com/codersidprogrammer/gonotif/pkg/queue"
 	"github.com/codersidprogrammer/gonotif/pkg/routes"
-	"github.com/codersidprogrammer/gonotif/platform/cache"
 	"github.com/codersidprogrammer/gonotif/platform/database"
 	"github.com/codersidprogrammer/gonotif/platform/transport"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 )
+
+var sigint = make(chan os.Signal, 1)
+var mqtt = transport.NewMqttTransport("MQTT")
+var redis = transport.NewRedisTransport("redis")
 
 func Bootstrap() {
 
@@ -29,10 +32,14 @@ func Bootstrap() {
 	config.LoadEnvironment(envFile)
 
 	// load utilities connection
-	cache.DoConnectRedis()
 	database.DoConnectEtcd()
+
+	// Do connect all transports
+	mqtt.DoConnect()
+	redis.DoConnect()
+
+	// Start queue handler
 	queue.QueueHandler()
-	transport.DoMqttConnect()
 }
 
 func Route(app *fiber.App) {
@@ -50,9 +57,12 @@ func RunServer(a *fiber.App) {
 	_idleConn := make(chan struct{})
 
 	go func() {
-		sigint := make(chan os.Signal, 1)
 		signal.Notify(sigint, os.Interrupt)
 		<-sigint
+
+		// Closing transport connection
+		mqtt.Close()
+		redis.Close()
 
 		log.Warn("Shutting down server...")
 		if err := a.Shutdown(); err != nil {

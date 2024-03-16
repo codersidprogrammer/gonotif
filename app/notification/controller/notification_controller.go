@@ -86,9 +86,18 @@ func (co *controller) CreateNotificationWorker(c *fiber.Ctx) error {
 		})
 
 	case dto.Email:
-		return c.Status(fiber.StatusNotFound).JSON(&fiber.Map{
-			"data": "No process found",
-			"meta": &fiber.Map{},
+		log.Debug(data)
+		result, err := co.queue.Register("send_email", work.Q{
+			"topic":   "send mail",
+			"payload": data.Payload,
+		})
+		utils.ReturnHttpErr400MessageIfErr(err, "queue failed", c)
+
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"data": data.Payload,
+			"meta": &fiber.Map{
+				"ID": result,
+			},
 			"time": time.Now(),
 		})
 	}

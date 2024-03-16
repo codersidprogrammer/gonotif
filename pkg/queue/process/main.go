@@ -73,9 +73,9 @@ func (p *ProcessPool) PoolsHandler() {
 			}
 
 		case <-sigint:
-			for pool := range p.process {
+			for pool, n := range p.process {
 				if pool.Started() {
-					log.Infof("Stopping process %v \n", pool)
+					log.Infof("Stopping process %v \n", n.ProcessName())
 					pool.Stop()
 				}
 			}

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/codersidprogrammer/gonotif/pkg/utils"
-	"github.com/codersidprogrammer/gonotif/platform/cache"
+	"github.com/codersidprogrammer/gonotif/platform/transport"
 	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
@@ -27,7 +27,7 @@ var _topic = make(chan string)
 func NewNotificationPushService() NotificationPushService {
 	return &pushNotification{
 		bucketService: NewNotificationBucketService(),
-		redisClient:   cache.RedisConnection,
+		redisClient:   transport.RedisClient,
 		ctx:           context.Background(),
 	}
 }

@@ -67,13 +67,14 @@ func QueueHandler() {
 	go pp.PoolsHandler()
 
 	wp := work.NewWorkerPool(process.SendNotifcation{}, 10, "development_test", RedisPool)
+	wp2 := work.NewWorkerPool(process.SendMail{}, 10, "development_test", RedisPool)
 
 	// Registering 1 process
 	sn := process.NewSendNotifcationProcess("send_notifcation", wp)
 	pp.RegisterProcess(sn)
 
 	// Registering 2 process
-	sn2 := process.NewSendMailProcess("send_email", wp)
+	sn2 := process.NewSendMailProcess("send_email", wp2)
 	pp.RegisterProcess(sn2)
 
 }
