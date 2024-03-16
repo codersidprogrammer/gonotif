@@ -27,6 +27,8 @@ func Bootstrap() {
 
 	// Load environment variables
 	config.LoadEnvironment(envFile)
+
+	// load utilities connection
 	cache.DoConnectRedis()
 	database.DoConnectEtcd()
 	queue.QueueHandler()
