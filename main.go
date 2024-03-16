@@ -1,8 +1,11 @@
 package main
 
 import (
+	"os"
+
 	"github.com/codersidprogrammer/gonotif/cmd"
 	"github.com/codersidprogrammer/gonotif/pkg/middleware"
+	"github.com/codersidprogrammer/gonotif/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
@@ -21,7 +24,11 @@ func main() {
 	})
 
 	// Middleware
-	app.Use(logger.New())
+	f, err := os.OpenFile("./request.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	utils.ExitIfErr(err, "Couldn't open log file")
+	app.Use(logger.New(logger.Config{
+		Output: f,
+	}))
 	app.Use("/ws", middleware.UseWebsocketHandler)
 
 	// Defining routes

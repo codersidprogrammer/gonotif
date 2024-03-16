@@ -34,8 +34,8 @@ func (a *appNotification) Route() {
 
 	r.Post("/bucket", a.controller.CreateNotification)
 	r.Post("/push", a.controller.Publish)
+	r.Post("/queue", a.controller.CreateNotificationWorker)
 
-	r.Get("/queue", a.controller.CreateNotificationWorker)
 	r.Get("/subscribe/:id", a.controller.Subscribe)
 	r.Get("/bucket", a.controller.GetNotifications)
 	r.Get("/bucket/:id", a.controller.GetNotification)

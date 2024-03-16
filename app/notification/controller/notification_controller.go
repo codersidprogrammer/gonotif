@@ -3,11 +3,13 @@ package controller
 import (
 	"time"
 
+	"github.com/codersidprogrammer/gonotif/app/notification/dto"
 	repository "github.com/codersidprogrammer/gonotif/app/notification/repositories"
 	"github.com/codersidprogrammer/gonotif/app/notification/service"
 	"github.com/codersidprogrammer/gonotif/pkg/queue"
 	"github.com/codersidprogrammer/gonotif/pkg/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/gojek/work"
 )
 
@@ -52,21 +54,44 @@ func (co *controller) CreateNotification(c *fiber.Ctx) error {
 }
 
 func (co *controller) CreateNotificationWorker(c *fiber.Ctx) error {
-	result, err := co.queue.Register("send_notifcation", work.Q{
-		"topic": "/xops/notification",
-		"message": work.Q{
-			"from":    "system",
-			"to":      "582276",
-			"message": "Thanks for your submission",
-		},
-	})
-	utils.ReturnHttpErr400MessageIfErr(err, "queue failed", c)
 
-	return c.Status(fiber.StatusOK).JSON(&fiber.Map{
-		"data": result,
-		"meta": &fiber.Map{},
-		"time": time.Now(),
-	})
+	var data dto.CreateNotificationRequest
+	err := c.BodyParser(&data)
+	utils.ReturnHttpErr400MessageIfErr(err, "unmarshal notification", c)
+
+	switch data.Type {
+
+	// Default handler if no type specified
+	default:
+		return c.Status(fiber.StatusNotFound).JSON(&fiber.Map{
+			"data": "No process found",
+			"meta": &fiber.Map{},
+			"time": time.Now(),
+		})
+
+	case dto.Push:
+		log.Debug(data)
+		result, err := co.queue.Register("send_notifcation", work.Q{
+			"topic":   "/xops/notification",
+			"payload": data.Payload,
+		})
+		utils.ReturnHttpErr400MessageIfErr(err, "queue failed", c)
+
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"data": data.Payload,
+			"meta": &fiber.Map{
+				"ID": result,
+			},
+			"time": time.Now(),
+		})
+
+	case dto.Email:
+		return c.Status(fiber.StatusNotFound).JSON(&fiber.Map{
+			"data": "No process found",
+			"meta": &fiber.Map{},
+			"time": time.Now(),
+		})
+	}
 }
 
 func (co *controller) Publish(c *fiber.Ctx) error {

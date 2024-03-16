@@ -30,3 +30,14 @@ func GenerateRandomString(length int) string {
 	}
 	return result.String()
 }
+
+func CheckIfHasSpecifiedSuffix(s string, limiter string, suffix string) bool {
+	if len(s) == 0 {
+		return false
+	}
+
+	parts := strings.Split(s, limiter)
+	last := parts[len(parts)-1]
+
+	return strings.HasSuffix(last, suffix)
+}
