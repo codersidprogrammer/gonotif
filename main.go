@@ -8,6 +8,7 @@ import (
 	"github.com/codersidprogrammer/gonotif/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/pprof"
 )
 
 func main() {
@@ -19,7 +20,7 @@ func main() {
 	app := fiber.New(fiber.Config{
 		ServerHeader:      "Notification Server",
 		AppName:           "Go Notif",
-		EnablePrintRoutes: false,
+		EnablePrintRoutes: true,
 		Prefork:           false,
 	})
 
@@ -30,6 +31,9 @@ func main() {
 		Output: f,
 	}))
 	app.Use("/ws", middleware.UseWebsocketHandler)
+	app.Use(pprof.New(pprof.Config{
+		Prefix: "/profile",
+	}))
 
 	// Defining routes
 	cmd.Route(app)

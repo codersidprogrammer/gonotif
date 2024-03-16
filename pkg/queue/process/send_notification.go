@@ -38,6 +38,7 @@ func (s *SendNotifcation) execute(job *work.Job) error {
 		return err
 	}
 
+	log.Infof("Job completed successfully for %s:%s", job.Name, job.ID)
 	return nil
 }
 
