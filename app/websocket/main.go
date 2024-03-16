@@ -1,25 +1,30 @@
 package websocket
 
 import (
+	"github.com/codersidprogrammer/gonotif/app/websocket/controller"
+	"github.com/codersidprogrammer/gonotif/pkg/model"
 	fiber_websocket "github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 )
 
-type client struct {
-	channel  string
-	topic    string
-	bucketId string
+type appWebsocket struct {
+	app                *fiber.App
+	mqttNotifControler controller.WebsocketController
 }
 
-type Websocket struct {
-	app        *fiber.App
-	clients    map[*fiber_websocket.Conn]client
-	register   chan *fiber_websocket.Conn
-	unregister chan *fiber_websocket.Conn
-	broadcast  chan []byte
+func NewAppWebsocket(app *fiber.App) model.App {
+	return &appWebsocket{
+		app:                app,
+		mqttNotifControler: controller.NewMqttNotificationController(),
+	}
 }
 
-type AppWebsocket interface {
-	Route()
-	GetWebsocketHandler(c *fiber_websocket.Conn)
+// Route implements model.App.
+func (a *appWebsocket) Route() {
+	mnc := controller.NewMqttNotificationController()
+	go mnc.ConnectionListener()
+	go mnc.MessageListener()
+
+	route := a.app.Group("/ws")
+	route.Get("/notification", fiber_websocket.New(mnc.WebsocketHandler))
 }

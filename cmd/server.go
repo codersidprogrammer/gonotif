@@ -13,6 +13,7 @@ import (
 	"github.com/codersidprogrammer/gonotif/pkg/routes"
 	"github.com/codersidprogrammer/gonotif/platform/cache"
 	"github.com/codersidprogrammer/gonotif/platform/database"
+	"github.com/codersidprogrammer/gonotif/platform/transport"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 )
@@ -26,9 +27,12 @@ func Bootstrap() {
 
 	// Load environment variables
 	config.LoadEnvironment(envFile)
+
+	// load utilities connection
 	cache.DoConnectRedis()
 	database.DoConnectEtcd()
 	queue.QueueHandler()
+	transport.DoMqttConnect()
 }
 
 func Route(app *fiber.App) {

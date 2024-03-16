@@ -1,7 +1,11 @@
 package process
 
 import (
+	"context"
+
+	"github.com/codersidprogrammer/gonotif/platform/transport"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/gojek/courier-go"
 	"github.com/gojek/work"
 )
 
@@ -18,19 +22,21 @@ func NewSendNotifcationProcess(jobName string, pool *work.WorkerPool) Processor 
 }
 
 func (s *SendNotifcation) log(job *work.Job, next work.NextMiddlewareFunc) error {
-	log.Info("Starting job: ", job.Name)
+	log.Infof("Starting job %s:%s", job.Name, job.ID)
 	return next()
 }
 
 func (s *SendNotifcation) execute(job *work.Job) error {
 	topic := job.ArgString("topic")
-	message := job.Args["message"]
+	payload := job.Args["payload"]
 
 	if err := job.ArgError(); err != nil {
 		return err
 	}
 
-	log.Infof("Sending message: %s to topic: %v", message, topic)
+	if err := transport.MqttClient.Publish(context.Background(), topic, payload, courier.QOSTwo); err != nil {
+		return err
+	}
 
 	return nil
 }
