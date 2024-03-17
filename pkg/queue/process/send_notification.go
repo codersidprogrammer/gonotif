@@ -35,6 +35,7 @@ func (s *SendNotifcation) execute(job *work.Job) error {
 	}
 
 	if err := transport.MqttClient.Publish(context.Background(), topic, payload, courier.QOSTwo); err != nil {
+		log.Error("Error publishing payload, error: ", err)
 		return err
 	}
 

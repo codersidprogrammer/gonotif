@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"encoding/json"
+	"sync"
+
 	"github.com/codersidprogrammer/gonotif/app/websocket/service"
 	"github.com/codersidprogrammer/gonotif/pkg/utils"
 	"github.com/gofiber/contrib/websocket"
@@ -9,18 +12,22 @@ import (
 
 type notificationConnection struct {
 	register   chan *websocket.Conn
-	clients    map[*websocket.Conn]*User
 	unregister chan *websocket.Conn
+	message    chan []byte
+	clients    map[*websocket.Conn]*User
 	user       *User
 	service    service.MqttWebsocketService
+	lock       *sync.RWMutex
 }
 
 func NewMqttNotificationController() WebsocketController {
 	return &notificationConnection{
 		register:   make(chan *websocket.Conn),
-		clients:    make(map[*websocket.Conn]*User),
 		unregister: make(chan *websocket.Conn),
+		message:    make(chan []byte),
+		clients:    make(map[*websocket.Conn]*User),
 		service:    service.NewMqttWebsocketService(),
+		lock:       &sync.RWMutex{},
 	}
 }
 
@@ -35,13 +42,47 @@ func (n *notificationConnection) ConnectionListener() {
 	log.Debug("starting connection handler")
 	for {
 		select {
+
+		// Add current connection to pool
 		case reg := <-n.register:
+			n.lock.Lock()
 			n.clients[reg] = n.user
 			log.Infof("Registered, total active connections: %d", len(n.clients))
+			n.lock.Unlock()
 
+		// Remove current connection from pool
 		case unreg := <-n.unregister:
+			n.lock.Lock()
 			log.Infof("Unregistered, total active connections: %d", len(n.clients))
 			delete(n.clients, unreg)
+			n.lock.Unlock()
+
+		// Wait for incoming messages and send them to websocket
+		// Using channel to make sure message are received one by one
+		case msg := <-n.message:
+			var _msg service.MqttMessage
+			if err := json.Unmarshal(msg, &_msg); err != nil {
+				log.Error("Error unmarshaling message, error ", err)
+				break
+			}
+
+			for conn := range n.clients {
+				if conn.Query("name") == _msg.Message.To && conn.Query("channel") == _msg.Topic {
+					if err := conn.WriteJSON(_msg); err != nil {
+						log.Error("WriteMessage error: ", err)
+						n.Close(conn)
+						return
+					}
+				}
+
+				if utils.CheckIfHasSpecifiedSuffix(_msg.Message.To, "/", "all") {
+					if err := conn.WriteJSON(_msg); err != nil {
+						log.Error("WriteMessage error: ", err)
+						n.Close(conn)
+						return
+					}
+				}
+			}
 		}
 	}
 }
@@ -53,28 +94,16 @@ func (n *notificationConnection) MessageListener() {
 
 		// Wait for incoming messages and send them to specific user
 		case msg := <-n.service.MessageChannel():
-			for conn := range n.clients {
-				if conn.Query("name") == msg.Message.To && conn.Query("channel") == msg.Topic {
-					if err := conn.WriteJSON(msg); err != nil {
-						log.Error("WriteMessage error: ", err)
-						n.Close(conn)
-						return
-					}
-				}
-
-				if utils.CheckIfHasSpecifiedSuffix(msg.Message.To, "/", "all") {
-					if err := conn.WriteJSON(msg); err != nil {
-						log.Error("WriteMessage error: ", err)
-						n.Close(conn)
-						return
-					}
-				}
+			msgByte, err := json.Marshal(msg)
+			if err != nil {
+				log.Error("Error marshaling message, error ", err)
 			}
+			n.message <- msgByte
 
-		// If connection is closed, then unsubscribe from
-		// current topic
-		case conn := <-n.unregister:
-			n.service.Unsubscribe(conn.Query("channel"))
+			// If connection is closed, then unsubscribe from
+			// current topic
+			// case conn := <-n.unregister:
+			// 	n.service.Unsubscribe(conn.Query("channel"))
 		}
 	}
 }
@@ -84,6 +113,7 @@ func (n *notificationConnection) WebsocketHandler(c *websocket.Conn) {
 	channel := c.Query("channel", "/#")
 	name := c.Query("name", "system")
 
+	// TODO: add necessary field for utilization
 	n.user = &User{
 		Name:  name,
 		Topic: channel,
@@ -109,6 +139,7 @@ loop:
 	for {
 		if mt, _, err = c.ReadMessage(); err != nil {
 			log.Warn("read message message: ", err)
+			n.Close(c)
 			break loop
 		}
 
