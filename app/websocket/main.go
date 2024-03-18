@@ -27,4 +27,5 @@ func (a *appWebsocket) Route() {
 
 	route := a.app.Group("/ws")
 	route.Get("/notification", fiber_websocket.New(mnc.WebsocketHandler))
+	route.Get("/stream", fiber_websocket.New(mnc.WebsocketHandler))
 }

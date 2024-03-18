@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/codersidprogrammer/gonotif/app/websocket/service"
-	"github.com/codersidprogrammer/gonotif/pkg/utils"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2/log"
 )
@@ -67,20 +66,32 @@ func (n *notificationConnection) ConnectionListener() {
 			}
 
 			for conn := range n.clients {
-				if conn.Query("name") == _msg.Message.To && conn.Query("channel") == _msg.Topic {
-					if err := conn.WriteJSON(_msg); err != nil {
-						log.Error("WriteMessage error: ", err)
-						n.Close(conn)
-						return
+				switch conn.Query("type") {
+				case "broadcast":
+					if conn.Query("channel") == _msg.Topic {
+						if err := conn.WriteJSON(_msg); err != nil {
+							log.Error("WriteMessage error: ", err)
+							n.Close(conn)
+							return
+						}
 					}
-				}
 
-				if utils.CheckIfHasSpecifiedSuffix(_msg.Message.To, "/", "all") {
-					if err := conn.WriteJSON(_msg); err != nil {
+				case "private":
+					if conn.Query("name") == _msg.Message.To && conn.Query("channel") == _msg.Topic {
+						if err := conn.WriteJSON(_msg); err != nil {
+							log.Error("WriteMessage error: ", err)
+							n.Close(conn)
+							return
+						}
+					}
+
+				default:
+					if err := conn.WriteMessage(websocket.CloseMessage, []byte("Specific your type notification")); err != nil {
 						log.Error("WriteMessage error: ", err)
 						n.Close(conn)
 						return
 					}
+
 				}
 			}
 		}
