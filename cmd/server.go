@@ -8,6 +8,7 @@ import (
 
 	"github.com/codersidprogrammer/gonotif/app/notification"
 	"github.com/codersidprogrammer/gonotif/app/user"
+	"github.com/codersidprogrammer/gonotif/app/user/service"
 	"github.com/codersidprogrammer/gonotif/app/websocket"
 	"github.com/codersidprogrammer/gonotif/pkg/config"
 	"github.com/codersidprogrammer/gonotif/pkg/queue"
@@ -38,6 +39,7 @@ func Bootstrap() {
 	// Do connect all transports
 	mqtt.DoConnect()
 	redis.DoConnect()
+	service.InitConnectionMqtt() // TODO: remove soon
 
 	// Start queue handler
 	queue.QueueHandler()

@@ -18,7 +18,7 @@ type UserController interface {
 }
 
 func NewUserAppController() UserController {
-	service.InitConnectionMqtt()
+	// service.InitConnectionMqtt()
 	return &controller{}
 }
 
