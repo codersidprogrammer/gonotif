@@ -1,11 +1,14 @@
 package controller
 
 import (
+	"context"
 	"time"
 
+	"github.com/codersidprogrammer/gonotif/app/user/service"
 	"github.com/codersidprogrammer/gonotif/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/gojek/courier-go"
 )
 
 type controller struct{}
@@ -15,6 +18,7 @@ type UserController interface {
 }
 
 func NewUserAppController() UserController {
+	service.InitConnectionMqtt()
 	return &controller{}
 }
 
@@ -26,6 +30,8 @@ func (*controller) OnUserHookHandler(c *fiber.Ctx) error {
 	}
 
 	log.Debug(body)
+
+	service.MqttClient.Publish(context.Background(), "xops/api/user", body, courier.QOSTwo)
 	return c.Status(fiber.StatusOK).JSON(&fiber.Map{
 		"data": nil,
 		"meta": &fiber.Map{},
