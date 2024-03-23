@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/codersidprogrammer/gonotif/app/notification"
+	"github.com/codersidprogrammer/gonotif/app/user"
 	"github.com/codersidprogrammer/gonotif/app/websocket"
 	"github.com/codersidprogrammer/gonotif/pkg/config"
 	"github.com/codersidprogrammer/gonotif/pkg/queue"
@@ -48,6 +49,7 @@ func Route(app *fiber.App) {
 	pr := routes.NewRoute("public")
 	pr.Register(notification.NewAppNotification(app))
 	pr.Register(websocket.NewAppWebsocket(app))
+	pr.Register(user.NewUserApp(app))
 
 	// Load all Route() methods
 	pr.Handler()
