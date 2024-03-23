@@ -31,7 +31,10 @@ func (*controller) OnUserHookHandler(c *fiber.Ctx) error {
 
 	log.Debug(body)
 
-	service.MqttClient.Publish(context.Background(), "xops/api/user", body, courier.QOSTwo)
+	if err := service.MqttClient.Publish(context.Background(), "xops/api/user", body, courier.QOSTwo); err != nil {
+		log.Error("Error publishing, error ", err)
+	}
+
 	return c.Status(fiber.StatusOK).JSON(&fiber.Map{
 		"data": nil,
 		"meta": &fiber.Map{},
