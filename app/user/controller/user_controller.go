@@ -67,7 +67,10 @@ func (*controller) OnUserHookHandler(ctx *fiber.Ctx) error {
 		utils.ReturnErrMessageIfErr(err, "onUserHookHandler", ctx)
 	}
 
-	var header interface{}
+	type Headers struct {
+		VerneHook string `reqHeader:"Vernemq-Hook"`
+	}
+	var header = new(Headers)
 	if err := ctx.ReqHeaderParser(&header); err != nil {
 		utils.ReturnErrMessageIfErr(err, "onUserHookHandler", ctx)
 	}
