@@ -86,7 +86,12 @@ func (c *controller) OnUserHookHandler(ctx *fiber.Ctx) error {
 		c.activeUserService.SetOnlineUser(&user)
 	case "on_client_offline":
 		// TODO: add handler for deleting client
-		log.Info(user)
+		c.activeUserService.DeleteOnlineUser(&user)
+
+	case "on_client_gone":
+		log.Infof("Client gone, removing: %s", user.ClientId)
+		c.activeUserService.DeleteOnlineUser(&user)
+
 	}
 
 	// Send as monitor topics

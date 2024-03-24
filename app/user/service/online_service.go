@@ -25,7 +25,7 @@ type onlineUser struct {
 type OnlineUserService interface {
 	SetOnlineUser(u *ActiveUser) (*ActiveUser, error)
 	GetOnlineUser(key string) ([]ActiveUser, error)
-	DeleteOnlineUser(clientId string) error
+	DeleteOnlineUser(u *ActiveUser) error
 }
 
 func NewOnlineUserService() OnlineUserService {
@@ -36,11 +36,28 @@ func NewOnlineUserService() OnlineUserService {
 }
 
 // DeleteOnlineUser implements OnlineUserService.
-func (user *onlineUser) DeleteOnlineUser(clientId string) error {
-	// user.transport.SPop(user.ctx, )
-	// if user.repository.SIsMember(user.ctx, )
+func (user *onlineUser) DeleteOnlineUser(u *ActiveUser) error {
+	project, err := utils.GetItemFromSplitText(u.ClientId, "_", 0)
+	if err != nil {
+		return nil
+	}
 
-	user.repository.SRem(user.ctx, clientId)
+	b, err2 := json.Marshal(u)
+	if err2 != nil {
+		return err2
+	}
+
+	isMember, err3 := user.repository.SIsMember(user.ctx, fmt.Sprintf("push:%s:active", project), string(b)).Result()
+	if err3 != nil {
+		return err3
+	}
+
+	if isMember {
+		if _, err := user.repository.SRem(user.ctx, fmt.Sprintf("push:%s:active", project), string(b)).Result(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
