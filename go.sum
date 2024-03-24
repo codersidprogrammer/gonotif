@@ -31,6 +31,8 @@ github.com/gofiber/storage/etcd v1.0.1 h1:WUecoZRN9zXTF+Sws5iP3+0Z9pLDL11sdm3Mix
 github.com/gofiber/storage/etcd v1.0.1/go.mod h1:k0ASiQmjPeaSU5hGzsYrt4jbhFq771RQeTnDYYPT5Bg=
 github.com/gofiber/storage/redis/v3 v3.1.0 h1:URly7BB1TVz15vPy2R1Q6vBqI53cDiD6p5qKZX/hpog=
 github.com/gofiber/storage/redis/v3 v3.1.0/go.mod h1:HQ2wqleiIwb0Fbssq2T3v5DBiNlDZsCihWOuVmguIbg=
+github.com/gofiber/storage/redis/v3 v3.1.1 h1:dkmeTv8qmM6giR65yTAxXN4lP1UU/h7uXuWuQoJOjdI=
+github.com/gofiber/storage/redis/v3 v3.1.1/go.mod h1:BQ/vdV/MJKi8tcLvHfvBPXiM4pzitDx5YqqDz/XvF0I=
 github.com/gogo/protobuf v1.3.2 h1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=
 github.com/gogo/protobuf v1.3.2/go.mod h1:P1XiOD3dCwIKUDQYPy72D8LYyHL2YPYrpS2s69NZV8Q=
 github.com/gojek/courier-go v0.5.3 h1:ASkf+VXVpSeWqdUjDZWQ76ZT8Vkc00/hmzxE3C4TT1M=
@@ -74,6 +76,8 @@ github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINE
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/redis/go-redis/v9 v9.3.0 h1:RiVDjmig62jIWp7Kk4XVLs0hzV6pI3PyTnnL0cnn0u0=
 github.com/redis/go-redis/v9 v9.3.0/go.mod h1:hdY0cQFCN4fnSYT6TkisLufl/4W5UIXyv0b/CLO2V2M=
+github.com/redis/go-redis/v9 v9.5.1 h1:H1X4D3yHPaYrkL5X06Wh6xNVM/pX0Ft4RV0vMGvLBh8=
+github.com/redis/go-redis/v9 v9.5.1/go.mod h1:hdY0cQFCN4fnSYT6TkisLufl/4W5UIXyv0b/CLO2V2M=
 github.com/rivo/uniseg v0.2.0 h1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=

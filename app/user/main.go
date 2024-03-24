@@ -23,4 +23,6 @@ func (a *userApp) Route() {
 	r := a.app.Group("/v1/user")
 
 	r.Post("/hook", a.controller.OnUserHookHandler)
+	r.Post("/active", a.controller.CreateActiveUser)
+	r.Get("/active/:key", a.controller.GetActiveUsers)
 }

@@ -14,7 +14,7 @@ require (
 	github.com/gofiber/contrib/websocket v1.3.0 // indirect
 	github.com/gofiber/fiber/v2 v2.52.2 // indirect
 	github.com/gofiber/storage/etcd v1.0.1 // indirect
-	github.com/gofiber/storage/redis/v3 v3.1.0 // indirect
+	github.com/gofiber/storage/redis/v3 v3.1.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gojek/courier-go v0.5.3 // indirect
 	github.com/gojek/work v0.7.7 // indirect
@@ -30,7 +30,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
-	github.com/redis/go-redis/v9 v9.3.0 // indirect
+	github.com/redis/go-redis/v9 v9.5.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/savsgio/gotils v0.0.0-20240303185622-093b76447511 // indirect

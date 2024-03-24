@@ -2,6 +2,7 @@ package utils
 
 import (
 	"crypto/rand"
+	"errors"
 	"math/big"
 	"regexp"
 	"strings"
@@ -40,4 +41,12 @@ func CheckIfHasSpecifiedSuffix(s string, limiter string, suffix string) bool {
 	last := parts[len(parts)-1]
 
 	return strings.HasSuffix(last, suffix)
+}
+
+func GetItemFromSplitText(splitText string, delimiter string, index int) (string, error) {
+	if len(splitText) == 0 {
+		return "", errors.New("split text is not good form")
+	}
+	parts := strings.Split(splitText, delimiter)
+	return parts[index], nil
 }
