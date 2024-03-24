@@ -15,6 +15,10 @@ type controller struct {
 	activeUserService service.OnlineUserService
 }
 
+type Headers struct {
+	VerneHook string `reqHeader:"Vernemq-Hook"`
+}
+
 type UserController interface {
 	CreateActiveUser(ctx *fiber.Ctx) error
 	GetActiveUsers(ctx *fiber.Ctx) error
@@ -61,31 +65,37 @@ func (c *controller) GetActiveUsers(ctx *fiber.Ctx) error {
 }
 
 // OnUserHookHandler implements UserController.
-func (*controller) OnUserHookHandler(ctx *fiber.Ctx) error {
-	var body interface{}
-	if err := ctx.BodyParser(&body); err != nil {
-		utils.ReturnErrMessageIfErr(err, "onUserHookHandler", ctx)
+func (c *controller) OnUserHookHandler(ctx *fiber.Ctx) error {
+
+	// Parsing user request
+	var user service.ActiveUser
+	if err := ctx.BodyParser(&user); err != nil {
+		utils.ReturnErrMessageIfErr(err, "Creating user failed, error", ctx)
 	}
 
-	type Headers struct {
-		VerneHook string `reqHeader:"Vernemq-Hook"`
-	}
+	// Getting header information
 	var header = new(Headers)
 	if err := ctx.ReqHeaderParser(header); err != nil {
 		utils.ReturnErrMessageIfErr(err, "onUserHookHandler", ctx)
 	}
-	log.Info(header)
-	log.Info(string(ctx.Request().Header.Header()))
 
-	if err := service.MqttClient.Publish(context.Background(), "xops/api/user", body, courier.QOSTwo); err != nil {
+	// Handling hook request
+	switch header.VerneHook {
+	case "on_client_wakeup":
+		c.activeUserService.SetOnlineUser(&user)
+	case "on_client_offline":
+		// TODO: add handler for deleting client
+		log.Info(user)
+	}
+
+	// Send as monitor topics
+	// TODO: change topic handler
+	if err := service.MqttClient.Publish(context.Background(), "xops/api/user", user, courier.QOSTwo); err != nil {
 		log.Error("Error publishing, error ", err)
-	} else {
-		log.Debug("Published")
-		log.Debug(body)
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(&fiber.Map{
-		"data": nil,
+		"data": user,
 		"meta": &fiber.Map{},
 		"time": time.Now(),
 	})
