@@ -78,6 +78,7 @@ func (c *controller) OnUserHookHandler(ctx *fiber.Ctx) error {
 	if err := ctx.ReqHeaderParser(header); err != nil {
 		utils.ReturnErrMessageIfErr(err, "onUserHookHandler", ctx)
 	}
+	log.Infof("Headers handler hook: %s", header.VerneHook)
 
 	// Handling hook request
 	switch header.VerneHook {
