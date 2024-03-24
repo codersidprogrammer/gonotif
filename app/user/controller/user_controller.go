@@ -72,6 +72,7 @@ func (*controller) OnUserHookHandler(ctx *fiber.Ctx) error {
 		utils.ReturnErrMessageIfErr(err, "onUserHookHandler", ctx)
 	}
 	log.Info(header)
+	log.Info(string(ctx.Request().Header.Header()))
 
 	if err := service.MqttClient.Publish(context.Background(), "xops/api/user", body, courier.QOSTwo); err != nil {
 		log.Error("Error publishing, error ", err)
