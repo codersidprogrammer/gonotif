@@ -71,7 +71,7 @@ func (*controller) OnUserHookHandler(ctx *fiber.Ctx) error {
 		VerneHook string `reqHeader:"Vernemq-Hook"`
 	}
 	var header = new(Headers)
-	if err := ctx.ReqHeaderParser(&header); err != nil {
+	if err := ctx.ReqHeaderParser(header); err != nil {
 		utils.ReturnErrMessageIfErr(err, "onUserHookHandler", ctx)
 	}
 	log.Info(header)
