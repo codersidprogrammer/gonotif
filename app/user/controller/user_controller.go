@@ -96,7 +96,12 @@ func (c *controller) OnUserHookHandler(ctx *fiber.Ctx) error {
 
 	// Send as monitor topics
 	// TODO: change topic handler
-	if err := service.MqttClient.Publish(context.Background(), "xops/api/user", user, courier.QOSTwo); err != nil {
+
+	_userEvent := &service.ActiveUserMonitor{
+		Event: header.VerneHook,
+		User:  &user,
+	}
+	if err := service.MqttClient.Publish(context.Background(), "xops/api/user", _userEvent, courier.QOSTwo); err != nil {
 		log.Error("Error publishing, error ", err)
 	}
 

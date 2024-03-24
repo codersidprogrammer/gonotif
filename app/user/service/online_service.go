@@ -14,7 +14,11 @@ import (
 type ActiveUser struct {
 	ClientId   string `json:"client_id"`
 	Mountpoint string `json:"mountpoint"`
-	// Timestamp  time.Time `json:"timestamp"`
+}
+
+type ActiveUserMonitor struct {
+	Event string      `json:"event"`
+	User  *ActiveUser `json:"user"`
 }
 
 type onlineUser struct {
