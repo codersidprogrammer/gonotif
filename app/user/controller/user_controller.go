@@ -1,14 +1,12 @@
 package controller
 
 import (
-	"context"
 	"time"
 
 	"github.com/codersidprogrammer/gonotif/app/user/service"
 	"github.com/codersidprogrammer/gonotif/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
-	"github.com/gojek/courier-go"
 )
 
 type controller struct {
@@ -83,6 +81,7 @@ func (c *controller) OnUserHookHandler(ctx *fiber.Ctx) error {
 	// Handling hook request
 	switch header.VerneHook {
 	case "on_client_wakeup":
+		log.Infof("Client wakeup: %s", user.ClientId)
 		c.activeUserService.SetOnlineUser(&user)
 	case "on_client_offline":
 		// TODO: add handler for deleting client
@@ -97,13 +96,13 @@ func (c *controller) OnUserHookHandler(ctx *fiber.Ctx) error {
 	// Send as monitor topics
 	// TODO: change topic handler
 
-	_userEvent := &service.ActiveUserMonitor{
-		Event: header.VerneHook,
-		User:  &user,
-	}
-	if err := service.MqttClient.Publish(context.Background(), "xops/api/user", _userEvent, courier.QOSTwo); err != nil {
-		log.Error("Error publishing, error ", err)
-	}
+	// _userEvent := &service.ActiveUserMonitor{
+	// 	Event: header.VerneHook,
+	// 	User:  &user,
+	// }
+	// if err := service.MqttClient.Publish(context.Background(), "xops/api/user", _userEvent, courier.QOSTwo); err != nil {
+	// 	log.Error("Error publishing, error ", err)
+	// }
 
 	return ctx.Status(fiber.StatusOK).JSON(&fiber.Map{
 		"data": user,

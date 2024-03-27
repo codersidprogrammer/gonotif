@@ -24,6 +24,7 @@ type NotificationController interface {
 	GetNotifications(c *fiber.Ctx) error
 	CreateNotification(c *fiber.Ctx) error
 	CreateNotificationWorker(c *fiber.Ctx) error
+	CreatePushNotification(c *fiber.Ctx) error
 
 	Publish(c *fiber.Ctx) error
 	Subscribe(c *fiber.Ctx) error
@@ -35,6 +36,27 @@ func NewNotificationController(service service.NotificationBucketService, push s
 		pushService: push,
 		queue:       queue.NewQueue("development_test"),
 	}
+}
+
+func (co *controller) CreatePushNotification(c *fiber.Ctx) error {
+	var _dto dto.CreatePushNotificationRequest
+	err := c.BodyParser(&_dto)
+	utils.ReturnHttpErr400MessageIfErr(err, "Unmarshall error", c)
+
+	// Register queue
+	result, err := co.queue.Register("send_notifcation", work.Q{
+		"topic":   _dto.Topic,
+		"payload": _dto.Payload,
+	})
+	utils.ReturnErrMessageIfErr(err, "Failed on queue, error ", c)
+
+	return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+		"data": _dto.Payload,
+		"meta": &fiber.Map{
+			"ID": result,
+		},
+		"time": time.Now(),
+	})
 }
 
 // CreateNotification implements NotificationController.
@@ -51,6 +73,7 @@ func (co *controller) CreateNotification(c *fiber.Ctx) error {
 		"meta": &fiber.Map{},
 		"time": time.Now(),
 	})
+
 }
 
 func (co *controller) CreateNotificationWorker(c *fiber.Ctx) error {

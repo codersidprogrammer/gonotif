@@ -8,7 +8,6 @@ import (
 
 	"github.com/codersidprogrammer/gonotif/app/notification"
 	"github.com/codersidprogrammer/gonotif/app/user"
-	"github.com/codersidprogrammer/gonotif/app/user/service"
 	"github.com/codersidprogrammer/gonotif/app/websocket"
 	"github.com/codersidprogrammer/gonotif/pkg/config"
 	"github.com/codersidprogrammer/gonotif/pkg/queue"
@@ -20,7 +19,7 @@ import (
 )
 
 var sigint = make(chan os.Signal, 1)
-var mqtt = transport.NewMqttTransport("MQTT")
+var mqtt = transport.NewMqttTransport("MQTT Verne")
 var redis = transport.NewRedisTransport("redis")
 
 func Bootstrap() {
@@ -39,7 +38,7 @@ func Bootstrap() {
 	// Do connect all transports
 	mqtt.DoConnect()
 	redis.DoConnect()
-	service.InitConnectionMqtt() // TODO: remove soon
+	// service.InitConnectionMqtt() // TODO: remove soon
 
 	// Start queue handler
 	queue.QueueHandler()

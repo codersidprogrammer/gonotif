@@ -41,6 +41,11 @@ func (t *mqttTransport) DoConnect() error {
 			log.Infof("[MQTT] Creating New %s Transport Connection", t.name)
 			MqttClient, err = courier.NewClient(
 				courier.WithAddress(host, uint16(port)),
+				courier.WithClientID("xops_system"),
+				courier.WithUsername(os.Getenv("MQTT_USERNAME")),
+				courier.WithPassword(os.Getenv("MQTT_PASSWORD")),
+				courier.WithKeepAlive(60),
+				// courier.WithMaxReconnectInterval(30),
 			)
 
 			if err != nil {
