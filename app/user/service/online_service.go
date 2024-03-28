@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 
+	"github.com/codersidprogrammer/gonotif/app/user/dto"
 	"github.com/codersidprogrammer/gonotif/pkg/utils"
 	"github.com/codersidprogrammer/gonotif/platform/transport"
 	"github.com/go-redis/redis/v8"
@@ -30,6 +32,7 @@ type OnlineUserService interface {
 	SetOnlineUser(u *ActiveUser) (*ActiveUser, error)
 	GetOnlineUser(key string) ([]ActiveUser, error)
 	DeleteOnlineUser(u *ActiveUser) error
+	GetAllActiveSessions() (*dto.UserActiveSession, error)
 }
 
 func NewOnlineUserService() OnlineUserService {
@@ -37,6 +40,26 @@ func NewOnlineUserService() OnlineUserService {
 		repository: transport.RedisClient,
 		ctx:        context.Background(),
 	}
+}
+
+// GetAllActiveSessions implements OnlineUserService.
+func (user *onlineUser) GetAllActiveSessions() (*dto.UserActiveSession, error) {
+	r, err := transport.HttpClient.Get("http://tbUxuXrPa0bgJeezx2wmLRiUPigplUIR@172.16.41.73:8888/api/v1/session/show", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err2 := io.ReadAll(r.Body)
+	if err2 != nil {
+		return nil, err
+	}
+
+	uas, err3 := dto.UnmarshalUserActiveSession(b)
+	if err3 != nil {
+		return nil, err
+	}
+
+	return &uas, nil
 }
 
 // DeleteOnlineUser implements OnlineUserService.

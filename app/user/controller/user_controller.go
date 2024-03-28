@@ -18,46 +18,23 @@ type Headers struct {
 }
 
 type UserController interface {
-	CreateActiveUser(ctx *fiber.Ctx) error
-	GetActiveUsers(ctx *fiber.Ctx) error
+	GetActiveSession(ctx *fiber.Ctx) error
 	OnUserHookHandler(ctx *fiber.Ctx) error
 }
 
 func NewUserAppController() UserController {
-	// service.InitConnectionMqtt()
 	return &controller{
 		activeUserService: service.NewOnlineUserService(),
 	}
 }
 
-// CreateActiveUser implements UserController.
-func (c *controller) CreateActiveUser(ctx *fiber.Ctx) error {
-	var user service.ActiveUser
-	if err := ctx.BodyParser(&user); err != nil {
-		utils.ReturnErrMessageIfErr(err, "Creating user failed, error", ctx)
-	}
-
-	au, err := c.activeUserService.SetOnlineUser(&user)
-	utils.ReturnErrMessageIfErr(err, "Failed to set active user", ctx)
-
-	return ctx.Status(fiber.StatusCreated).JSON(&fiber.Map{
-		"data": au,
-		"meta": &fiber.Map{},
-		"time": time.Now(),
-	})
-}
-
-// GetActiveUsers implements UserController.
-func (c *controller) GetActiveUsers(ctx *fiber.Ctx) error {
-	key := ctx.Params("key", "")
-	au, err := c.activeUserService.GetOnlineUser(key)
-	utils.ReturnErrMessageIfErr(err, "Failed to get active users", ctx)
+func (c *controller) GetActiveSession(ctx *fiber.Ctx) error {
+	uas, err := c.activeUserService.GetAllActiveSessions()
+	utils.ReturnErrMessageIfErr(err, "Failed to get active sessions ", ctx)
 
 	return ctx.Status(fiber.StatusOK).JSON(&fiber.Map{
-		"data": au,
-		"meta": &fiber.Map{
-			"key": key,
-		},
+		"data": uas.Table,
+		"meta": &fiber.Map{},
 		"time": time.Now(),
 	})
 }

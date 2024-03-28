@@ -1,11 +1,8 @@
 package process
 
 import (
-	"context"
-
-	"github.com/codersidprogrammer/gonotif/platform/transport"
+	"github.com/codersidprogrammer/gonotif/app/notification/service"
 	"github.com/gofiber/fiber/v2/log"
-	"github.com/gojek/courier-go"
 	"github.com/gojek/work"
 )
 
@@ -28,6 +25,7 @@ func (s *SendNotifcation) log(job *work.Job, next work.NextMiddlewareFunc) error
 
 func (s *SendNotifcation) execute(job *work.Job) error {
 	topic := job.ArgString("topic")
+	username := job.ArgString("username")
 	payload := job.Args["payload"]
 
 	if err := job.ArgError(); err != nil {
@@ -35,7 +33,9 @@ func (s *SendNotifcation) execute(job *work.Job) error {
 	}
 
 	log.Debugf("Executing topic: %s", topic)
-	if err := transport.MqttClient.Publish(context.Background(), topic, payload, courier.QOSOne); err != nil {
+	ps := service.NewPushService()
+
+	if err := ps.Send(username, topic, payload); err != nil {
 		log.Error("Error publishing payload, error: ", err)
 		return err
 	}

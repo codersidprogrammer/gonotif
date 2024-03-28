@@ -21,6 +21,7 @@ import (
 var sigint = make(chan os.Signal, 1)
 var mqtt = transport.NewMqttTransport("MQTT Verne")
 var redis = transport.NewRedisTransport("redis")
+var http = transport.NewHttpClientTransport("HTTP Service")
 
 func Bootstrap() {
 
@@ -38,6 +39,7 @@ func Bootstrap() {
 	// Do connect all transports
 	mqtt.DoConnect()
 	redis.DoConnect()
+	http.DoConnect()
 	// service.InitConnectionMqtt() // TODO: remove soon
 
 	// Start queue handler

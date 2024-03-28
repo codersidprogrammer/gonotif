@@ -13,6 +13,7 @@ type CreateNotificationRequest struct {
 }
 
 type CreatePushNotificationRequest struct {
-	Topic   string      `json:"topic"`
-	Payload interface{} `json:"payload"`
+	Topic    string      `json:"topic"`
+	Username string      `json:"username"`
+	Payload  interface{} `json:"payload"`
 }
