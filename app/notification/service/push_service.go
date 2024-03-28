@@ -46,13 +46,11 @@ func (ps *pushService) Send(username string, topic string, message interface{}) 
 			}
 
 			return nil
-		} else {
-			// TODO: implement sender non mqtt
-			// then send via another protocol
-			log.Warnf("User: %s is not active. Sending via another protocol", ua.ClientID)
-			return nil
 		}
 	}
 
+	// TODO: implement sender non mqtt
+	// then send via another protocol
+	log.Warnf("User: %s is not active. Sending via another protocol", username)
 	return nil
 }
